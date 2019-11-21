@@ -43,6 +43,10 @@ sh -c "aws s3 sync ${SOURCE_DIR:-.} s3://${AWS_S3_BUCKET}/${DEST_DIR} \
               --profile s3-sync-action \
               --no-progress \
               ${ENDPOINT_APPEND} $*"
+if [ -z "$AWS_CLOUDFRONT_DISTRIBUTION" ]; then
+  aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION} --paths '/*'
+fi
+
 
 # Clear out credentials after we're done.
 # We need to re-run `aws configure` with bogus input instead of
