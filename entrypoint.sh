@@ -3,8 +3,7 @@
 set -e
 
 if [ -z "$AWS_S3_BUCKET" ]; then
-  echo "AWS_S3_BUCKET is not set. Quitting."
-  exit 1
+  aws s3 mb s3://$AWS_S3_BUCKET
 fi
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]; then
