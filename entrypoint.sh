@@ -3,7 +3,7 @@
 set -e
 
 if [ -z "$AWS_S3_BUCKET" ]; then
-  aws s3 mb s3://$AWS_S3_BUCKET
+  sh -c "aws s3 mb s3://${AWS_S3_BUCKET}"
 fi
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]; then
