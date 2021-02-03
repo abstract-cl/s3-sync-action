@@ -3,7 +3,8 @@
 set -e
 
 if [ -z "$AWS_S3_BUCKET" ]; then
-  sh -c "aws s3 mb s3://${AWS_S3_BUCKET}"
+  echo "AWS_S3_BUCKET is not set. Quitting."
+  exit 1
 fi
 
 if [ -z "$AWS_ACCESS_KEY_ID" ]; then
@@ -36,15 +37,31 @@ ${AWS_REGION}
 text
 EOF
 
-# Sync using our dedicated profile and suppress verbose messages.
+
+{ 
+  # Sync using our dedicated profile and suppress verbose messages.
 # All other flags are optional via the `args:` directive.
-sh -c "aws s3 sync ${SOURCE_DIR:-.} s3://${AWS_S3_BUCKET}/${DEST_DIR} \
-              --profile s3-sync-action \
-              --no-progress \
-              ${ENDPOINT_APPEND} $*"
-if [ -n "$AWS_CLOUDFRONT_DISTRIBUTION" ]; then
-  aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION} --paths '/*'
-fi
+    sh -c "aws s3 sync ${SOURCE_DIR:-.} s3://${AWS_S3_BUCKET}/${DEST_DIR} \
+                  --profile s3-sync-action \
+                  --no-progress \
+                  ${ENDPOINT_APPEND} $*"
+    if [ -n "$AWS_CLOUDFRONT_DISTRIBUTION" ]; then
+      aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION} --paths '/*'
+    fi
+} || { 
+  #Create the bucket and then sync
+  # Sync using our dedicated profile and suppress verbose messages.
+# All other flags are optional via the `args:` directive.
+  sh -c "aws s3 mb s3://${AWS_S3_BUCKET}"
+  sh -c "aws s3 sync ${SOURCE_DIR:-.} s3://${AWS_S3_BUCKET}/${DEST_DIR} \
+                  --profile s3-sync-action \
+                  --no-progress \
+                  ${ENDPOINT_APPEND} $*"
+    if [ -n "$AWS_CLOUDFRONT_DISTRIBUTION" ]; then
+      aws cloudfront create-invalidation --distribution-id ${AWS_CLOUDFRONT_DISTRIBUTION} --paths '/*'
+    fi
+}
+
 
 
 # Clear out credentials after we're done.
